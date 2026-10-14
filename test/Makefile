@@ -5,7 +5,7 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = attenuation.v tone.v noise.v envelope.v signal_edge.v pwm.v tt_um_rejunity_ay8913.v
+PROJECT_SOURCES = attenuation.v tone.v noise.v envelope.v signal_edge.v pwm.v ay8913_core.v tt_um_rejunity_ay8913.v
 
 ifneq ($(GATES),yes)
 

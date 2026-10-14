@@ -9,7 +9,7 @@ MAX_VOLUME = 255/2
 
 def print_chip_state(dut):
     try:
-        internal = dut.tt_um_rejunity_ay8913_uut
+        internal = dut.tt_um_rejunity_ay8913_uut.core
         print(
             dut.ui_in.value, ">||"
             '{:2d}'.format(int(internal.latched_register.value)), 
@@ -611,6 +611,55 @@ async def test_envelope_restarts(dut):
             assert get_output(dut) == amplitudes[restart_volume]
 
     await done(dut)
+
+async def read_register(dut, reg):
+    dut.uio_in.value =       0b000000_11 # Latch register index
+    dut.ui_in.value  = reg & 15
+    await ClockCycles(dut.clk, 2)
+    dut.uio_in.value =       0b000000_01 # Read from register array
+    dut.ui_in.value  = 0
+    await ClockCycles(dut.clk, 1)
+    core = dut.tt_um_rejunity_ay8913_uut.core   # DA7..DA0 output has no TinyTapeout pins
+    assert core.dout_en.value == 1
+    val = int(core.dout.value)
+    dut.uio_in.value =       0b000000_00 # Inactivate
+    await ClockCycles(dut.clk, 1)
+    return val
+
+@cocotb.test()
+async def test_register_readback(dut):
+    await reset(dut)
+    # AY-3-891x returns unimplemented bits as 0
+    mask = [0xFF, 0x0F, 0xFF, 0x0F, 0xFF, 0x0F, 0x1F, 0xFF,
+            0x1F, 0x1F, 0x1F, 0xFF, 0xFF, 0x0F, 0xFF, 0xFF]
+    for reg in range(14):
+        assert await read_register(dut, reg) == 0, f"R{reg} not cleared by reset"
+    for val in [0xFF, 0xA5, 0x5A]:
+        for reg in range(14):
+            await set_register(dut, reg, val)
+        for reg in range(14):
+            got = await read_register(dut, reg)
+            assert got == val & mask[reg], f"R{reg}: wrote {val:02X}, read {got:02X}"
+
+    # R14/R15: I/O port pins (tied to FF) while input, the output latch while output
+    await set_register(dut, 14, 0x12)
+    await set_register(dut, 15, 0x34)
+    await set_register(dut,  7, 0b00_111_111)
+    assert await read_register(dut, 14) == 0xFF
+    assert await read_register(dut, 15) == 0xFF
+    await set_register(dut,  7, 0b11_111_111)
+    assert await read_register(dut, 14) == 0x12
+    assert await read_register(dut, 15) == 0x34
+
+    # Chip deselected by a latch with a non-matching DA7..DA4 must not drive the bus
+    dut.uio_in.value = 0b000000_11
+    dut.ui_in.value  = 0xF0
+    await ClockCycles(dut.clk, 2)
+    dut.uio_in.value = 0b000000_01
+    await ClockCycles(dut.clk, 1)
+    assert dut.tt_um_rejunity_ay8913_uut.core.dout_en.value == 0
+    await done(dut)
+
 
 # @cocotb.test()
 async def test_psg(dut):

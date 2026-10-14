@@ -136,7 +136,7 @@ The AY-3-8913 is programmed by updating its internal registers via the data bus.
 | BDIR | BC1 | Bus state description                                |
 |------|-----|------------------------------------------------------|
 | 0    |  0  | Bus is inactive                                      |
-| 0    |  1  | (Not implemented)                                    |
+| 0    |  1  | Read register (ay8913_core only, no TT pins)         |
 | 1    |  0  | Write bus value to the previously latched register # |
 | 1    |  1  | Latch bus value as the destination register #        |
 
