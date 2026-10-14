@@ -64,11 +64,12 @@ module ay8913_core #( parameter DA7_DA4_UPPER_ADDRESS_MASK = 4'b0000,
     reg [7:0] register[REGISTERS-1:0];  // 82 bits are used out of 128
                                         // IFF cs==1 ({A9,A8,DA7..DA4} matches the chip mask)
     reg restart_envelope;
+    integer i;                          // Verilog-2005: no loop-scoped declarations
 
     always @(posedge clk) begin
         if (reset) begin
             latched_register <= 0;
-            for (integer i = 0; i < REGISTERS; i = i + 1)
+            for (i = 0; i < REGISTERS; i = i + 1)
                 register[i] <= 0;
             active <= 0;
             restart_envelope <= 0;
