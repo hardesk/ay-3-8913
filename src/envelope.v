@@ -86,6 +86,8 @@ module envelope #( parameter PERIOD_BITS = 16, parameter ENVELOPE_BITS = 4 ) (
         .on_posedge(trigger_edge)               // NOTE: assign test_1 = f_env; [see: lvd]
     );
 
+    localparam MAX_VALUE = {ENVELOPE_BITS{1'b1}};
+
     reg invert_output;
     reg [ENVELOPE_BITS-1:0] envelope_counter;   // @TODO: rename to counter
     reg stop;                                   // @TODO: rename to hold_reached or stop_counter
@@ -111,7 +113,6 @@ module envelope #( parameter PERIOD_BITS = 16, parameter ENVELOPE_BITS = 4 ) (
     end
 
 
-    localparam MAX_VALUE = {ENVELOPE_BITS{1'b1}};
     assign out =
         invert_output ? MAX_VALUE - envelope_counter : envelope_counter;
 

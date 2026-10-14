@@ -28,7 +28,6 @@ module tt_um_rejunity_ay8913 #( parameter DA7_DA4_UPPER_ADDRESS_MASK = 4'b0000,
     wire reset = ! rst_n;
 
     // List all unused inputs to prevent warnings
-    wire _unused = &{ena, uio_in[7:4], bus_inactive, bus_read, 1'b0};
 
     wire [1:0] master_clock_control = uio_in[3:2];
     wire [7:0] data = ui_in;
@@ -64,13 +63,15 @@ module tt_um_rejunity_ay8913 #( parameter DA7_DA4_UPPER_ADDRESS_MASK = 4'b0000,
     // NOT IMPLEMENTED! A8 and A9 address lines
     wire cs = (data[7:4] == DA7_DA4_UPPER_ADDRESS_MASK);
     wire latch = bus_latch_reg && cs;
+    reg active;                         // chip becomes active during the Latch Register Address phase
     wire write = bus_write && active;   // NOTE: chip must be in active state
+
+    wire _unused = &{ena, uio_in[7:4], bus_inactive, bus_read, 1'b0};
                                         // in order to accept writes to the register file 
 
     localparam REGISTERS = 16;
     reg [3:0] latched_register;
     reg [7:0] register[REGISTERS-1:0];  // 82 bits are used out of 128
-    reg active;                         // chip becomes active during the Latch Register Address phase
                                         // IFF cs==1 ({A9,A8,DA7..DA4} matches the chip mask)
     reg restart_envelope;
 
